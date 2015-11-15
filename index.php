@@ -6,11 +6,12 @@ class KsiazkaTelefoniczna {
 	protected $rekordow = 0;
 	private $od = 0;
 	private $komunikaty = array();
+	private $delimiter = ';';
 	protected $conf = array(
-		'plik' => "baza4.csv"
+		'plik' => "baza0.csv"
 	);
 
-    public function __construct( /*...*/ ) {
+    public function __construct() {
 	
 		$this->otworz();
 		$this->zadanie();
@@ -26,7 +27,7 @@ public function zadanie(){
  
 	$this->dodaj($numer,$osoba);
 
-	$this->komunikaty[] = "Pomyślnie dodano numer ".$numer." należący do".$osoba.".";
+	$this->komunikaty[] = "Pomyślnie dodano numer ".$numer." należący do ".$osoba.".";
 
  }
  
@@ -37,17 +38,31 @@ public function zadanie(){
  	
 	$this->usun($id);
 
-	$this->komunikaty[] = "Pomyślnie usunięto numer ".$numer." należący do".$osoba.".";
+	$this->komunikaty[] = "Pomyślnie usunięto numer ".$numer." należący do ".$osoba.".";
  
  } 
 
- if (isset($_POST["od"])){
-	$this->od = $this->conf['od'];
+ if (isset($_GET["od"])){
+	$this->od = $_GET["od"];
  }
  
  
 }
 
+
+private function zakoduj(){
+foreach($this->baza as &$r)
+	foreach($r as &$f)
+		$f = base64_encode($f);
+
+}
+
+private function odkoduj(){
+foreach($this->baza as &$r)
+	foreach($r as &$f)
+		$f = base64_decode($f);
+
+}
 
 	
 public function otworz(){
@@ -56,27 +71,32 @@ public function otworz(){
 		return;
 
 	if (($handle = fopen($this->conf['plik'], "r")) !== FALSE) {
-		while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+		while (($data = fgetcsv($handle, 1000, $this->delimiter)) !== FALSE) {
 			array_push($this->baza, $data);
 		}
 		fclose($handle);
 	}
-	
+
+	$this->odkoduj();	
 	
 }
 
 public function zapisz(){
 $fp = fopen($this->conf['plik'], 'w');
 
-
-$data = $this->baza;
+	$this->zakoduj();
+	$data = $this->baza;
+	$this->odkoduj();
 foreach ( $data as $line ) {
 
-    fputcsv($fp, $line, ",");
+    fputcsv($fp, $line, $this->delimiter);
 
 	
 	}
 fclose($fp);
+
+
+
 }
 
 public function usun($id){
@@ -118,6 +138,7 @@ public function wyswietlKomunikaty(){
 		echo '<p>'.$k.'</p>';
 	}
 	echo "</div>";
+	
 }
 
 public function wyswietlTabele(){
@@ -125,7 +146,6 @@ public function wyswietlTabele(){
 	$b = $this->baza;
 
 	echo '<table class="telefony">';
-	//echo '<tr>';
 	foreach($b as $r){
 		echo '<tr>';
 		$id=$r[0];
@@ -211,6 +231,7 @@ $phonebook = new KsiazkaTelefoniczna();
 $phonebook->wyswietlFormularz();
 $phonebook->wyswietlTabele();
 $phonebook->wyswietlKomunikaty();
+
 
 	echo '<center>14.02.2015</center>';
 
